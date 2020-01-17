@@ -19,7 +19,7 @@ public class RequestHandler extends Thread{
     // keeps images, scripts and .css when light mode is on
     boolean isFileAllowed(String path){
         if(this.proxyMode.equals("light")){
-            if(path.indexOf(".jpg") != -1){
+            if(path.indexOf(".jpg") != -1 || path.indexOf(".css") != -1 || path.indexOf(".img") != -1 || path.indexOf(".js") != -1){
                 return false;
             }else{
                 return true;
@@ -35,10 +35,10 @@ public class RequestHandler extends Thread{
         System.out.println("Request Handler:");
         try{
             System.out.println("Socket created");
-            OutputStream outputStream = client.getOutputStream();
+            OutputStream outputStream = this.client.getOutputStream();
             PrintWriter printWriter = new PrintWriter(outputStream);
 
-            InputStream inputStream = client.getInputStream();
+            InputStream inputStream = this.client.getInputStream();
             String request = "";
             int nextByte;
             while ((nextByte = inputStream.read()) != '\n') {
@@ -62,17 +62,16 @@ public class RequestHandler extends Thread{
                 PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
 
                 //send request
-                pw.println(params[0] + " " + params[1]);
+                pw.println("GET " + params[1] + " HTTP/1.1");
                 pw.println("Host: " + host);
                 pw.println("Connection: close");
                 pw.println();
 
                 //get response
 //                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-//                while (((line = in.readLine()) != null) && (!(line.equals("")))){
-//                    html += line;
+//                while ((line = in.readLine()) != null){
+//                    html += line + "\\r\\n";
 //                }
-
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
                 html = in.lines().collect(Collectors.joining(System.lineSeparator()));
@@ -83,12 +82,10 @@ public class RequestHandler extends Thread{
                 }
 
                 //send html back to client
-                printWriter.println("HTTP/1.0 200 OK");
-                printWriter.println("");
                 printWriter.println(html);
                 printWriter.flush();
+                client.close();
             }
-            client.close();
         }catch (Exception e){
             e.printStackTrace();
         }
